@@ -2,7 +2,35 @@
 
 const boardElement = document.getElementById("board");
 const btn1 = document.getElementById("btn1");
+const hitbox = document.querySelectorAll(".hitbox");
 
+var hitboxHtml ='<rect x="157.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell1"/>'+
+'<rect x="143.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell2"/>'+
+'<rect x="129.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell3"/>'+
+'<rect x="115.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell4"/>'+
+'<rect x="101.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell5"/>'+
+'<rect x="87.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell6"/>'+
+
+'<rect x="49" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell8"/>'+
+'<rect x="63" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell7"/>'+
+'<rect x="35" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell9"/>'+
+'<rect x="21" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell10"/>'+
+'<rect x="7" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell11"/>'+
+'<rect x="-7" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell12"/>'+
+
+'<rect x="-7" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell13"/>'+
+'<rect x="7" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell14"/>'+
+'<rect x="21" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell15"/>'+
+'<rect x="35" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell16"/>'+
+'<rect x="49" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell17"/>'+
+'<rect x="63" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell18"/>'+
+
+'<rect x="87.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell19"/>'+
+'<rect x="101.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell20"/>'+
+'<rect x="115.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell21"/>'+
+'<rect x="129.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell22"/>'+
+'<rect x="143.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell23"/>'+
+'<rect x="157.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell24"/>';
 
 var html;
 var board;
@@ -15,7 +43,7 @@ var deneme;
 //Updates UI, according to board
 const updateUI = function(board){    
     //need to reset the html code at the beginning of every update
-    html ="";
+    html = "";
 
     //for every cell in the board
     board.forEach(function (cell, cellNumber) {
@@ -83,10 +111,10 @@ const updateUI = function(board){
             cy += cyMultiplier * 13;
         });
     });
-
     //Sends our html value to index.html
-    boardElement.innerHTML = html;
+    boardElement.innerHTML=html;
 }
+
 //Creates new game
 const newGame = function(){
     //Create new board
@@ -118,13 +146,19 @@ const newGame = function(){
     //Updates board
     updateUI(board);
 } 
-
 newGame()
 btn1.addEventListener('click',function(e){
-    e.preventDefault()    
     
     if(board[0].length>0)
         board[11].push(board[0].pop())
     console.log(board)
     updateUI(board);
   })
+
+hitbox.forEach((element) => {
+    element.addEventListener("click", function(){
+        console.log(element.id);
+    });
+  });
+
+ 

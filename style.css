@@ -16,3 +16,10 @@
     top: 0;
     left: 0;
   }
+  .dice{
+    width: 600px;
+    height: 670px;
+    position: absolute;
+    display: inline-block;
+    transition: transform 150ms ease-in-out;
+  }
