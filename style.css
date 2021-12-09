@@ -63,3 +63,9 @@
     box-shadow: 0 5px black;
     transform: translateY(4px);
   }
+  .hitbox:hover{
+    fill:olive;
+    stroke:navy;
+    stroke-opacity: 0.05;
+    fill-opacity: 0.2;
+  }
