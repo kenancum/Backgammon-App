@@ -17,9 +17,49 @@
     left: 0;
   }
   .dice{
+    max-width: 45%;
+    border:1px solid black;
+    left: 10px;
+    top: 10px;
+    position: relative;
+  }
+  .container{
     width: 600px;
     height: 670px;
     position: absolute;
     display: inline-block;
     transition: transform 150ms ease-in-out;
+  }
+  .content{
+    height: 50%;
+    width: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .btn-roll {
+    border:1px solid black;
+    position: absolute;
+    top: 53%;
+    left: 35%;
+    background-color: #00a516;
+    color: white;
+    padding: 16px 32px;
+    text-align: center;
+    font-size: 16px;
+    margin: 4px 2px;
+    opacity: 1;
+    transition: 0.3s;
+    display: inline-block;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  .btn-roll:hover {background-color: #006e0f;}
+  .btn-roll:active {
+    background-color: #00580c;
+    box-shadow: 0 5px black;
+    transform: translateY(4px);
   }
