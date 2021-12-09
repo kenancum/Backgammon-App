@@ -1,36 +1,11 @@
 'use strict';
 
 const boardElement = document.getElementById("board");
-const btn1 = document.getElementById("btn1");
+const dice1El = document.getElementById("dice1");
+const dice2El = document.getElementById("dice2");
+const btnRoll = document.getElementById("btn-roll");
 const hitbox = document.querySelectorAll(".hitbox");
-
-var hitboxHtml ='<rect x="157.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell1"/>'+
-'<rect x="143.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell2"/>'+
-'<rect x="129.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell3"/>'+
-'<rect x="115.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell4"/>'+
-'<rect x="101.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell5"/>'+
-'<rect x="87.2" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell6"/>'+
-
-'<rect x="49" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell8"/>'+
-'<rect x="63" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell7"/>'+
-'<rect x="35" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell9"/>'+
-'<rect x="21" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell10"/>'+
-'<rect x="7" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell11"/>'+
-'<rect x="-7" y="91.8" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell12"/>'+
-
-'<rect x="-7" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell13"/>'+
-'<rect x="7" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell14"/>'+
-'<rect x="21" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell15"/>'+
-'<rect x="35" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell16"/>'+
-'<rect x="49" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell17"/>'+
-'<rect x="63" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell18"/>'+
-
-'<rect x="87.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell19"/>'+
-'<rect x="101.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell20"/>'+
-'<rect x="115.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell21"/>'+
-'<rect x="129.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell22"/>'+
-'<rect x="143.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell23"/>'+
-'<rect x="157.2" y="-6.5" width="14" height="80" fill-opacity="0.0" class="hitbox" id="cell24"/>';
+var dice1,dice2;
 
 var html;
 var board;
@@ -147,12 +122,15 @@ const newGame = function(){
     updateUI(board);
 } 
 newGame()
-btn1.addEventListener('click',function(e){
-    
-    if(board[0].length>0)
-        board[11].push(board[0].pop())
-    console.log(board)
-    updateUI(board);
+btnRoll.addEventListener('click',function(e){
+    dice1 = Math.floor(Math.random() * 6 + 1);
+    dice2 = Math.floor(Math.random() * 6 + 1);
+
+    dice1El.src="img/dice/dice-"+dice1+".png";
+    dice2El.src="img/dice/dice-"+dice2+".png";
+    // if(board[0].length>0)
+    //     board[11].push(board[0].pop())
+    // updateUI(board);
   })
 
 hitbox.forEach((element) => {
