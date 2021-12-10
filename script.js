@@ -8,7 +8,7 @@ const hitbox = document.querySelectorAll(".hitbox");
 var dice1,dice2;
 
 var html;
-var board;;
+var board;
 var players =["White","Black"];
 var cx,cy,area;
 var cyMultiplier;
@@ -22,6 +22,8 @@ var turn;
 var clickCounter;
 var move;
 var clickedCellPlayer;
+var dice1Played, dice2Played;
+var moveMultiplier;
 
 //Updates UI, according to board
 const updateUI = function(board){    
@@ -89,7 +91,8 @@ const updateUI = function(board){
                 cy -= cyMultiplier * 58.5;
 
             //we are getting html code with the parameters we calculate. checker presents the color of checkers
-            html += '<circle cx='+cx+' cy="'+cy+'" r="6.5" fill="'+checker+'" stroke="red" stroke-width="0.2"/>"';
+            html += '<circle cx=' + cx +' cy="' + cy
+            + '" r="6.5" fill="' + checker + '" stroke="red" stroke-width="0.2"/>"';
             
             cy += cyMultiplier * 13;
         });
@@ -142,11 +145,17 @@ const newGame = function(){
     updateUI(board);
 }
 
-const ResetClicks = function(){
+const resetClicks = function(){
     clickCounter = 0;
     firstClickedCellID = null;
     secondClickedCellID = null;
+}
 
+const moveChecker = function(){
+    move--;
+    board[secondClickedCellID-1].push(board[firstClickedCellID-1].pop())
+    updateUI(board);
+    console.log(move)
 }
 
 newGame()
@@ -166,6 +175,8 @@ btnRoll.addEventListener('click',function(e){
         //Checks double dice. If there is double dice, player should move 4 turn
         move = dice1 == dice2 ? 4 : 2;
 
+        dice1Played = false;
+        dice2Played = false;
         //We rolled the dices. Now we can move
         gameStatus="Move";
     }
@@ -182,14 +193,15 @@ hitbox.forEach((element) => {
             clickCounter %= 2;
             currentPlayer = players[turn % 2];
             clickedCellPlayer = board[element.id-1][0];
-            
+            moveMultiplier = turn == 0? 1: -1;
+
             if(clickCounter==1){
                 if(currentPlayer == clickedCellPlayer){
                     message = "First pick is correct";
                     firstClickedCellID = element.id;
                 }
                 else{
-                    ResetClicks();
+                    resetClicks();
 
                     if(!clickedCellPlayer){
                         message = "Empty Cell";
@@ -207,20 +219,31 @@ hitbox.forEach((element) => {
                         message = "Same cell selected";
                     }
                     else{
-                        message = "Everything seems fine to me";
-                        move--;
+                        if(dice1 == dice2 && secondClickedCellID == +firstClickedCellID + +dice1*moveMultiplier){
+                            moveChecker();   
+                        }
+                        else if(!dice1Played && secondClickedCellID == +firstClickedCellID + +dice1*moveMultiplier){
+                            dice1Played = true;
+                            moveChecker();                    
+                        }
+                        else if(!dice2Played && secondClickedCellID == +firstClickedCellID + +dice2*moveMultiplier){
+                            dice2Played = true;
+                            moveChecker();
+                        }
+                        else{
+                            message = "Wrong Move";
+                        }                      
 
                         if(move==0){
                             message += "\n" + currentPlayer + "'s turn Ended!"
                             turn++;
                             gameStatus = "Roll";
-                        }
-                    }                
-                    board[secondClickedCellID-1].push(board[firstClickedCellID-1].pop())
-                    updateUI(board);
+                        }                                                                          
+                    }
+                    
                 }
                 else{
-                    ResetClicks();
+                    resetClicks();
                     message = "Wrong move! You can't put your checker onto opponents checker!";
                 }
             }            
