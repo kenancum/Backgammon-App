@@ -8,12 +8,20 @@ const hitbox = document.querySelectorAll(".hitbox");
 var dice1,dice2;
 
 var html;
-var board;
-var playerBlack = "Black";
-var playerWhite = "White";
+var board;;
+var players =["White","Black"];
 var cx,cy,area;
 var cyMultiplier;
-var deneme;
+var gameStatus;
+var doubleDice = false;
+var counter;
+var currentPlayer;
+var firstClickedCellID, secondClickedCellID;
+var message;
+var turn;
+var clickCounter;
+var move;
+var clickedCellPlayer;
 
 //Updates UI, according to board
 const updateUI = function(board){    
@@ -95,39 +103,73 @@ const newGame = function(){
     //Create new board
     board = [];
 
-    //Board should contain 24 Cells, cells have to be stack
-    for (let i = 0; i < 24; i++) {
+    //Player should roll the dice to start the game
+    gameStatus = "Roll";
+
+    //Decides which players turn. Even turns are for white, odd turns are for black player
+    turn=0;
+
+    //initial clicks are not clicked
+    clickCounter = 0;
+
+    //Board should contain 24 Cells, cells has to be stack
+    for (let i = 0; i < 24; i++){
         board.push([]);
     }
 
     //Initial positions of checkers
-    for(let i = 0; i<5;i++){
-        board[5].push(playerBlack);
-        board[12].push(playerBlack);    
-        board[11].push(playerWhite);
-        board[18].push(playerWhite);
+    for(let i = 0; i<5;i++)
+    {
+        board[5].push(players[1]);
+        board[12].push(players[1]);    
+        board[11].push(players[0]);
+        board[18].push(players[0]);
         
-        if(i<3){
-            board[7].push(playerBlack);
-            board[16].push(playerWhite);
+        if(i<3)
+        {
+            board[7].push(players[1]);
+            board[16].push(players[0]);
         }
 
-        if(i<2){
-            board[0].push(playerWhite);
-            board[23].push(playerBlack);
+        if(i<2)
+        {
+            board[0].push(players[0]);
+            board[23].push(players[1]);
         }
     }
 
     //Updates board
     updateUI(board);
-} 
-newGame()
-btnRoll.addEventListener('click',function(e){
-    dice1 = Math.floor(Math.random() * 6 + 1);
-    dice2 = Math.floor(Math.random() * 6 + 1);
+}
 
-    dice1El.src="img/dice/dice-"+dice1+".png";
-    dice2El.src="img/dice/dice-"+dice2+".png";
+const ResetClicks = function(){
+    clickCounter = 0;
+    firstClickedCellID = null;
+    secondClickedCellID = null;
+
+}
+
+newGame()
+
+
+btnRoll.addEventListener('click',function(e){
+    if(gameStatus=="Roll")
+    {
+        //Dice must be random and values are between 1 and 6
+        dice1 = Math.floor(Math.random() * 6 + 1);
+        dice2 = Math.floor(Math.random() * 6 + 1);
+    
+        //Returns dice png according to dice number
+        dice1El.src="img/dice/dice-"+dice1+".png";
+        dice2El.src="img/dice/dice-"+dice2+".png";
+        
+        //Checks double dice. If there is double dice, player should move 4 turn
+        move = dice1 == dice2 ? 4 : 2;
+
+        //We rolled the dices. Now we can move
+        gameStatus="Move";
+    }
+    
     // if(board[0].length>0)
     //     board[11].push(board[0].pop())
     // updateUI(board);
@@ -135,7 +177,58 @@ btnRoll.addEventListener('click',function(e){
 
 hitbox.forEach((element) => {
     element.addEventListener("click", function(){
-        console.log(element.id);
+        if(gameStatus == "Move"){
+            clickCounter++;
+            clickCounter %= 2;
+            currentPlayer = players[turn % 2];
+            clickedCellPlayer = board[element.id-1][0];
+            
+            if(clickCounter==1){
+                if(currentPlayer == clickedCellPlayer){
+                    message = "First pick is correct";
+                    firstClickedCellID = element.id;
+                }
+                else{
+                    ResetClicks();
+
+                    if(!clickedCellPlayer){
+                        message = "Empty Cell";
+                    }
+                    else{
+                        message =  "Wrong player! Its " + currentPlayer + "'s turn!";
+                    }
+                }
+            }
+            else{
+                if(currentPlayer == clickedCellPlayer || !clickedCellPlayer){
+                    secondClickedCellID = element.id;
+
+                    if(firstClickedCellID===secondClickedCellID){
+                        message = "Same cell selected";
+                    }
+                    else{
+                        message = "Everything seems fine to me";
+                        move--;
+
+                        if(move==0){
+                            message += "\n" + currentPlayer + "'s turn Ended!"
+                            turn++;
+                            gameStatus = "Roll";
+                        }
+                    }                
+                    board[secondClickedCellID-1].push(board[firstClickedCellID-1].pop())
+                    updateUI(board);
+                }
+                else{
+                    ResetClicks();
+                    message = "Wrong move! You can't put your checker onto opponents checker!";
+                }
+            }            
+        }
+        else{
+            message = "Roll the dice first!"
+        }        
+        console.log(message);                
     });
   });
 
