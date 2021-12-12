@@ -10,20 +10,19 @@ var dice1,dice2;
 var html;
 var board;
 var players =["White","Black"];
-var cx,cy,area;
-var cyMultiplier;
+var cx, cy, cyMultiplier, area;
 var gameStatus;
 var doubleDice = false;
-var counter;
-var currentPlayer;
+var currentPlayer, clickedCellPlayer;
 var firstClickedCellID, secondClickedCellID;
 var message;
-var turn;
-var clickCounter;
-var move;
-var clickedCellPlayer;
+var turn, clickCounter, move;
 var dice1Played, dice2Played;
 var moveMultiplier;
+var clickedCellCheckerCount;
+var hittedCheckers;
+var dice1Anim, dice2Anim;
+var diceAnimation;
 
 //Updates UI, according to board
 const updateUI = function(board){    
@@ -46,7 +45,7 @@ const updateUI = function(board){
         cy = area > 2 ? 0 : 165.4;
 
         /*  
-            1) 11.5 is average of the board (from 0 to 23)
+            1) 11.5 is the middle of the board (from 0 to 23)
             2) Upper and bottom side of the board must have the same cx coordinates
                so we have to take absolute value to calculate how many cells we need to go |cellNumber-11.5|
             3) We need to get rid of 0.5. |cellNumber-11.5|-0.5
@@ -97,6 +96,23 @@ const updateUI = function(board){
             cy += cyMultiplier * 13;
         });
     });
+
+    //The rest is for hitted checkers. They must seen at the middle of the board.
+    //Middle of the coordinate X is 82.10
+    cx = 82.10;
+
+    //Some math to put hitted checkers to different Y coordinates.
+    hittedCheckers.forEach(function (checker, checkerNumber){
+        cy = 82.25;
+        cyMultiplier = checkerNumber % 2 == 0 ? 1 : -1;
+        for(var i=0; i <= (checkerNumber-1)/2; i++){
+            cy += 13*cyMultiplier;
+        }
+
+        html += '<circle cx=' + cx +' cy="' + cy
+        + '" r="6.5" fill="' + checker + '" stroke="red" stroke-width="0.2"/>"';
+    });
+
     //Sends our html value to index.html
     boardElement.innerHTML=html;
 }
@@ -105,6 +121,9 @@ const updateUI = function(board){
 const newGame = function(){
     //Create new board
     board = [];
+
+    //Array for broken checkers
+    hittedCheckers = [];
 
     //Player should roll the dice to start the game
     gameStatus = "Roll";
@@ -153,21 +172,37 @@ const resetClicks = function(){
 
 const moveChecker = function(){
     move--;
-    board[secondClickedCellID-1].push(board[firstClickedCellID-1].pop())
+    if((clickedCellPlayer!=currentPlayer && (clickedCellCheckerCount == 1))){
+        hittedCheckers.push(board[secondClickedCellID-1].pop());
+    }
+
+    board[secondClickedCellID-1].push(board[firstClickedCellID-1].pop());
+    console.log(dice1)
+    console.log(dice2)
     updateUI(board);
-    console.log(move)
+    message = "Checker is putted on";
+}
+
+
+const updateUIHighlightedMoves = function(mainCell){
+    console.log(document.getElementById(+mainCell + +dice1));
+    console.log(document.getElementById(+mainCell + +dice2));
 }
 
 newGame()
 
 
 btnRoll.addEventListener('click',function(e){
-    if(gameStatus=="Roll")
-    {
+    
+    if(gameStatus == "Rolling Animation"){
+        //Stop animation
+        clearInterval(diceAnimation);
+        btnRoll.textContent = "Roll!";
+        
         //Dice must be random and values are between 1 and 6
         dice1 = Math.floor(Math.random() * 6 + 1);
         dice2 = Math.floor(Math.random() * 6 + 1);
-    
+            
         //Returns dice png according to dice number
         dice1El.src="img/dice/dice-"+dice1+".png";
         dice2El.src="img/dice/dice-"+dice2+".png";
@@ -175,15 +210,31 @@ btnRoll.addEventListener('click',function(e){
         //Checks double dice. If there is double dice, player should move 4 turn
         move = dice1 == dice2 ? 4 : 2;
 
+        //Reset the dice played 
         dice1Played = false;
         dice2Played = false;
+
         //We rolled the dices. Now we can move
         gameStatus="Move";
     }
     
-    // if(board[0].length>0)
-    //     board[11].push(board[0].pop())
-    // updateUI(board);
+    //Animation
+    if(gameStatus=="Roll")
+    {                
+        btnRoll.textContent = "Stop!";
+        
+        gameStatus = "Rolling Animation";
+
+        //Repeats until user stops
+        diceAnimation = setInterval(function() {
+
+            dice1Anim = Math.floor(Math.random() * 6 + 1);
+            dice2Anim = Math.floor(Math.random() * 6 + 1);                
+            
+            dice1El.src="img/dice/dice-"+dice1Anim+".png";
+            dice2El.src="img/dice/dice-"+dice2Anim+".png";
+          }, 50);
+    }
   })
 
 hitbox.forEach((element) => {
@@ -193,12 +244,15 @@ hitbox.forEach((element) => {
             clickCounter %= 2;
             currentPlayer = players[turn % 2];
             clickedCellPlayer = board[element.id-1][0];
-            moveMultiplier = turn == 0? 1: -1;
-
+            clickedCellCheckerCount = board[element.id-1].length;
+            console.log(clickedCellCheckerCount)
+            moveMultiplier = turn % 2 == 0 ? 1: -1;
+            
             if(clickCounter==1){
-                if(currentPlayer == clickedCellPlayer){
+                if(currentPlayer == clickedCellPlayer){                    
                     message = "First pick is correct";
                     firstClickedCellID = element.id;
+                    updateUIHighlightedMoves(firstClickedCellID);
                 }
                 else{
                     resetClicks();
@@ -212,21 +266,22 @@ hitbox.forEach((element) => {
                 }
             }
             else{
-                if(currentPlayer == clickedCellPlayer || !clickedCellPlayer){
+                if(currentPlayer == clickedCellPlayer || clickedCellCheckerCount <= 1){
+
                     secondClickedCellID = element.id;
 
                     if(firstClickedCellID===secondClickedCellID){
                         message = "Same cell selected";
                     }
                     else{
-                        if(dice1 == dice2 && secondClickedCellID == +firstClickedCellID + +dice1*moveMultiplier){
+                        if(dice1 == dice2 && secondClickedCellID == +firstClickedCellID + +dice1 * moveMultiplier){
                             moveChecker();   
                         }
-                        else if(!dice1Played && secondClickedCellID == +firstClickedCellID + +dice1*moveMultiplier){
+                        else if(!dice1Played && secondClickedCellID == +firstClickedCellID + +dice1 * moveMultiplier){
                             dice1Played = true;
                             moveChecker();                    
                         }
-                        else if(!dice2Played && secondClickedCellID == +firstClickedCellID + +dice2*moveMultiplier){
+                        else if(!dice2Played && secondClickedCellID == +firstClickedCellID + +dice2 * moveMultiplier){
                             dice2Played = true;
                             moveChecker();
                         }
@@ -254,5 +309,3 @@ hitbox.forEach((element) => {
         console.log(message);                
     });
   });
-
- 
