@@ -3,14 +3,12 @@
     position: relative;
     display: inline-block; /* <= shrinks container to image size */
     transition: transform 150ms ease-in-out;
-  }
-  
+  }  
   .img-overlay-wrap img { /* <= optional, for responsiveness */
      display: block;
      max-width: 100%;
      height: auto;
-  }
-  
+  }  
   .img-overlay-wrap svg {
     position: absolute;
     top: 0;
@@ -38,7 +36,6 @@
     left: 50%;
     transform: translate(-50%, -50%);
   }
-
   .btn-roll {
     border:1px solid black;
     position: absolute;
@@ -55,8 +52,7 @@
     display: inline-block;
     text-decoration: none;
     cursor: pointer;
-  }
-  
+  }  
   .btn-roll:hover {background-color: #006e0f;}
   .btn-roll:active {
     background-color: #00580c;
@@ -64,7 +60,12 @@
     transform: translateY(4px);
   }
   .hitbox:hover{
-    fill:olive;
+    fill:olive;    
+  }
+  #middle:hover{
+    fill:tomato;
+  }
+  #middle:hover, .hitbox:hover{    
     stroke:navy;
     stroke-opacity: 0.05;
     fill-opacity: 0.2;
