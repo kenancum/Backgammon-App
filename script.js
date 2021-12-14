@@ -11,7 +11,7 @@ var html;
 var board;
 var players =["White","Black"];
 var cx, cy, cyMultiplier, area;
-var gameStatus;
+var gameStatus = "Start";
 var doubleDice = false;
 var currentPlayer, clickedCellPlayer;
 var firstClickedCellID, secondClickedCellID;
@@ -125,6 +125,9 @@ const newGame = function(){
     //Array for broken checkers
     hittedCheckers = [];
 
+    //Change the text to give more clear direction
+    btnRoll.textContent = "Start!";
+
     //Player should roll the dice to start the game
     gameStatus = "Roll";
 
@@ -171,14 +174,24 @@ const resetClicks = function(){
 }
 
 const moveChecker = function(){
-    move--;
-    if((clickedCellPlayer!=currentPlayer && (clickedCellCheckerCount == 1))){
-        hittedCheckers.push(board[secondClickedCellID-1].pop());
+    //If its 0th cell (25th cell for black), its middle cell where hitted checkers stored
+    if(firstClickedCellID == 0 || firstClickedCellID == 25){
+        //Take the checker from first cell we clicked to second cell we clicked
+        board[secondClickedCellID-1].push(hittedCheckers.pop());
     }
+    else{
+        //Take the checker from first cell we clicked to second cell we clicked
+        board[secondClickedCellID-1].push(board[firstClickedCellID-1].pop());
+    }    
 
-    board[secondClickedCellID-1].push(board[firstClickedCellID-1].pop());
-    console.log(dice1)
-    console.log(dice2)
+    //If there is only one opponent in the target cell, Hit!
+    if((clickedCellPlayer!=currentPlayer && (clickedCellCheckerCount == 1))){
+        hittedCheckers.push(board[secondClickedCellID-1].shift());
+    }
+    //We moved so we need to reduce remaining move
+    move--;
+
+    //Changes UI after move
     updateUI(board);
     message = "Checker is putted on";
 }
@@ -189,12 +202,12 @@ const updateUIHighlightedMoves = function(mainCell){
     console.log(document.getElementById(+mainCell + +dice2));
 }
 
-newGame()
-
-
 btnRoll.addEventListener('click',function(e){
-    
-    if(gameStatus == "Rolling Animation"){
+    if(gameStatus == "Start"){
+        newGame();
+    }
+
+    else if(gameStatus == "Rolling Animation"){
         //Stop animation
         clearInterval(diceAnimation);
         btnRoll.textContent = "Roll!";
@@ -219,9 +232,9 @@ btnRoll.addEventListener('click',function(e){
     }
     
     //Animation
-    if(gameStatus=="Roll")
+    else if(gameStatus=="Roll")
     {                
-        btnRoll.textContent = "Stop!";
+        btnRoll.textContent = "Throw!";
         
         gameStatus = "Rolling Animation";
 
@@ -239,30 +252,37 @@ btnRoll.addEventListener('click',function(e){
 
 hitbox.forEach((element) => {
     element.addEventListener("click", function(){
+        console.log("Hitted checkers " +hittedCheckers.length);
         if(gameStatus == "Move"){
             clickCounter++;
             clickCounter %= 2;
             currentPlayer = players[turn % 2];
-            clickedCellPlayer = board[element.id-1][0];
-            clickedCellCheckerCount = board[element.id-1].length;
-            console.log(clickedCellCheckerCount)
+            clickedCellPlayer = element.id=="0" ? hittedCheckers[0] : board[element.id-1][0];
+            clickedCellCheckerCount = element.id=="0" ? hittedCheckers.length : board[element.id-1].length;
+            
             moveMultiplier = turn % 2 == 0 ? 1: -1;
             
-            if(clickCounter==1){
-                if(currentPlayer == clickedCellPlayer){                    
-                    message = "First pick is correct";
-                    firstClickedCellID = element.id;
-                    updateUIHighlightedMoves(firstClickedCellID);
+            if(clickCounter==1){                
+                if(currentPlayer == clickedCellPlayer){
+
+                    if(currentPlayer != hittedCheckers[0] || element.id == "0"){
+                        message = "First pick is correct";
+                        firstClickedCellID =  element.id==0 && turn % 2 == 1 ? 25 : element.id;                   
+                    }
+                    else{
+                        message = "You must play hitted checker first!";
+                        resetClicks();                        
+                    }
                 }
                 else{
-                    resetClicks();
-
                     if(!clickedCellPlayer){
                         message = "Empty Cell";
                     }
                     else{
                         message =  "Wrong player! Its " + currentPlayer + "'s turn!";
                     }
+
+                    resetClicks();
                 }
             }
             else{
@@ -270,7 +290,7 @@ hitbox.forEach((element) => {
 
                     secondClickedCellID = element.id;
 
-                    if(firstClickedCellID===secondClickedCellID){
+                    if(firstClickedCellID === secondClickedCellID){
                         message = "Same cell selected";
                     }
                     else{
@@ -287,25 +307,25 @@ hitbox.forEach((element) => {
                         }
                         else{
                             message = "Wrong Move";
-                        }                      
-
+                        }  
                         if(move==0){
                             message += "\n" + currentPlayer + "'s turn Ended!"
                             turn++;
                             gameStatus = "Roll";
-                        }                                                                          
+                        }                                                                        
                     }
-                    
                 }
                 else{
                     resetClicks();
-                    message = "Wrong move! You can't put your checker onto opponents checker!";
+                    message = "Wrong move! You can't put your checker onto opponents defense!";
                 }
             }            
         }
         else{
             message = "Roll the dice first!"
-        }        
+        }   
+        
+          
         console.log(message);                
     });
   });
