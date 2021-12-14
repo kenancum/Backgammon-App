@@ -22,7 +22,7 @@ var moveMultiplier;
 var clickedCellCheckerCount;
 var hittedCheckers;
 var dice1Anim, dice2Anim;
-var diceAnimation;
+var rollingAnimation;
 
 //Updates UI, according to board
 const updateUI = function(board){    
@@ -196,6 +196,9 @@ const moveChecker = function(){
     message = "Checker is putted on";
 }
 
+const isAbleToMove = function(dice){
+    return secondClickedCellID == +firstClickedCellID + +dice * moveMultiplier;
+};
 
 const updateUIHighlightedMoves = function(mainCell){
     console.log(document.getElementById(+mainCell + +dice1));
@@ -203,13 +206,14 @@ const updateUIHighlightedMoves = function(mainCell){
 }
 
 btnRoll.addEventListener('click',function(e){
+    //If game hasn't start yet
     if(gameStatus == "Start"){
         newGame();
     }
 
     else if(gameStatus == "Rolling Animation"){
-        //Stop animation
-        clearInterval(diceAnimation);
+        //Stops animation
+        clearInterval(rollingAnimation);
         btnRoll.textContent = "Roll!";
         
         //Dice must be random and values are between 1 and 6
@@ -239,7 +243,7 @@ btnRoll.addEventListener('click',function(e){
         gameStatus = "Rolling Animation";
 
         //Repeats until user stops
-        diceAnimation = setInterval(function() {
+        rollingAnimation = setInterval(function() {
 
             dice1Anim = Math.floor(Math.random() * 6 + 1);
             dice2Anim = Math.floor(Math.random() * 6 + 1);                
@@ -248,36 +252,61 @@ btnRoll.addEventListener('click',function(e){
             dice2El.src="img/dice/dice-"+dice2Anim+".png";
           }, 50);
     }
+    else{
+        console.log("Finish the turn before rolling dices again!");
+    }
   })
 
+//There is 25 hitbox elements. So I declared event listener function for each class named hitbox
 hitbox.forEach((element) => {
     element.addEventListener("click", function(){
-        console.log("Hitted checkers " +hittedCheckers.length);
+        /*I used game status to limit player to not do some things.
+        For example player shouldn't move the checkers before rolling dices
+        Or player shouldn't rolling dices more than once in a turn.
+        */
         if(gameStatus == "Move"){
+            //First click is for pulling second click is for putting. To simplifier I used odd and even
             clickCounter++;
             clickCounter %= 2;
+
+            //Player is decided by turn. even turns are for white, odd represents black player
             currentPlayer = players[turn % 2];
+
+            /*When you click, I want to keep clicked cells occupied by who. 0th id is for hitted checkers
+            Elements array is from 0 to 23 but id's are begins from 1 until 24
+            board array represents the game board
+            board[] means a cell in the board  
+            board[][] means a checker in spesific cell
+            */
             clickedCellPlayer = element.id=="0" ? hittedCheckers[0] : board[element.id-1][0];
             clickedCellCheckerCount = element.id=="0" ? hittedCheckers.length : board[element.id-1].length;
             
+            //If its black players turn, move should be reversed
             moveMultiplier = turn % 2 == 0 ? 1: -1;
             
+            //If a checker hasn't pulled yet
             if(clickCounter==1){                
+                //If player clicked the cell filled with players checker
                 if(currentPlayer == clickedCellPlayer){
-
+                    //If there is no hitted checker of his own or trying to pull a hitted checker
                     if(currentPlayer != hittedCheckers[0] || element.id == "0"){
-                        message = "First pick is correct";
+                        //Returns the clicked cell id. If its blacks turn, 0 should be 25
                         firstClickedCellID =  element.id==0 && turn % 2 == 1 ? 25 : element.id;                   
                     }
                     else{
                         message = "You must play hitted checker first!";
+                        /*Reset the first click because the action is not allowed 
+                        and player should start from the beginning*/
                         resetClicks();                        
                     }
                 }
+                //Other error messages
                 else{
+                    //If there is no checker in a cell
                     if(!clickedCellPlayer){
                         message = "Empty Cell";
                     }
+                    //If its opponents cell
                     else{
                         message =  "Wrong player! Its " + currentPlayer + "'s turn!";
                     }
@@ -285,46 +314,68 @@ hitbox.forEach((element) => {
                     resetClicks();
                 }
             }
+            //If its second click, putting action must provide
             else{
-                if(currentPlayer == clickedCellPlayer || clickedCellCheckerCount <= 1){
+                /*If player tries to target the cell where there is his cell
+                or opponents cell with a single checker*/
+                if(currentPlayer == clickedCellPlayer || clickedCellCheckerCount <= 1){  
 
-                    secondClickedCellID = element.id;
+                    //Returns the clicked cell id
+                    secondClickedCellID = element.id;                 
 
+                    //If player clicks same cell
                     if(firstClickedCellID === secondClickedCellID){
                         message = "Same cell selected";
                     }
                     else{
-                        if(dice1 == dice2 && secondClickedCellID == +firstClickedCellID + +dice1 * moveMultiplier){
+                        /*Equation is for calculating the cell that player can move
+                        For example if player is white, cell is 10 and dices are 2 and 5
+                        player can move to cells 12 or 15.
+                        But black player should move to 8 or 5
+                        10 +- 2 or 10 +- 5
+                        this +- is move multiplier
+                        */
+                       
+                        /*If dices are same, player gonna move 4 times
+                        so we shouldn"t take the dice out of the equation*/
+                        if(dice1 == dice2 && isAbleToMove(dice1)){
                             moveChecker();   
                         }
-                        else if(!dice1Played && secondClickedCellID == +firstClickedCellID + +dice1 * moveMultiplier){
+                        //If dice1 hasn't used yet
+                        else if(!dice1Played && isAbleToMove(dice1)){
                             dice1Played = true;
                             moveChecker();                    
                         }
-                        else if(!dice2Played && secondClickedCellID == +firstClickedCellID + +dice2 * moveMultiplier){
+                        //If dice2 hasn't used yet
+                        else if(!dice2Played && isAbleToMove(dice2)){
                             dice2Played = true;
                             moveChecker();
                         }
+                        //It means player try to put wrong cell.
                         else{
+                            resetClicks();
                             message = "Wrong Move";
-                        }  
-                        if(move==0){
-                            message += "\n" + currentPlayer + "'s turn Ended!"
-                            turn++;
-                            gameStatus = "Roll";
-                        }                                                                        
+                        }                                                                      
                     }
                 }
+                //This means, player try to put over oppents cell
                 else{
                     resetClicks();
                     message = "Wrong move! You can't put your checker onto opponents defense!";
                 }
             }            
         }
+        //Dice hasn't rolled yet
         else{
             message = "Roll the dice first!"
-        }   
-        
+        }
+
+        //If there is no move left, that means turn has ended
+        if(move==0){
+            message += "\n" + currentPlayer + "'s turn Ended!"
+            turn++;
+            gameStatus = "Roll";
+        }    
           
         console.log(message);                
     });
