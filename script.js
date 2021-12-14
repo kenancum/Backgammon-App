@@ -197,6 +197,13 @@ const moveChecker = function(){
 }
 
 const isAbleToMove = function(dice){
+    /*Equation is for calculating the cell that player can move
+    For example if player is white, cell is 10 and dices are 2 and 5
+    player can move to cells 12 or 15.
+    But black player should move to 8 or 5
+    10 +- 2 or 10 +- 5
+    this +- is move multiplier
+    */
     return secondClickedCellID == +firstClickedCellID + +dice * moveMultiplier;
 };
 
@@ -328,14 +335,6 @@ hitbox.forEach((element) => {
                         message = "Same cell selected";
                     }
                     else{
-                        /*Equation is for calculating the cell that player can move
-                        For example if player is white, cell is 10 and dices are 2 and 5
-                        player can move to cells 12 or 15.
-                        But black player should move to 8 or 5
-                        10 +- 2 or 10 +- 5
-                        this +- is move multiplier
-                        */
-                       
                         /*If dices are same, player gonna move 4 times
                         so we shouldn"t take the dice out of the equation*/
                         if(dice1 == dice2 && isAbleToMove(dice1)){
