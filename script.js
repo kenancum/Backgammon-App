@@ -17,12 +17,13 @@ var currentPlayer, clickedCellPlayer;
 var firstClickedCellID, secondClickedCellID;
 var message;
 var turn, clickCounter, move;
-var dice1Played, dice2Played;
+var isDice1Played, isDice2Played, isDicePlayed;
 var moveMultiplier;
 var clickedCellCheckerCount;
 var hittedCheckers;
 var dice1Anim, dice2Anim;
 var rollingAnimation;
+var targetCell;
 
 //Updates UI, according to board
 const updateUI = function(board){    
@@ -196,7 +197,12 @@ const moveChecker = function(){
     message = "Checker is putted on";
 }
 
-const isAbleToMove = function(dice){
+const isAbleToMove = function(dice, isDicePlayed){
+    //if dice isn't played or dices are equal, And target cell is equal to dice + first cell, it is ablee to move so returns true
+    return secondClickedCellID == moveableCellID(dice) && (!isDicePlayed || dice1 == dice2);
+};
+
+const moveableCellID= function(dice){
     /*Equation is for calculating the cell that player can move
     For example if player is white, cell is 10 and dices are 2 and 5
     player can move to cells 12 or 15.
@@ -204,12 +210,34 @@ const isAbleToMove = function(dice){
     10 +- 2 or 10 +- 5
     this +- is move multiplier
     */
-    return secondClickedCellID == +firstClickedCellID + +dice * moveMultiplier;
-};
+    return +firstClickedCellID + +dice * moveMultiplier;
+}
 
-const updateUIHighlightedMoves = function(mainCell){
-    console.log(document.getElementById(+mainCell + +dice1));
-    console.log(document.getElementById(+mainCell + +dice2));
+const updateUIHighlightedMoves = function(){
+    //If dice1 not played or dices are equal, highlight the moveable cell
+    if(!isDice1Played || dice1 == dice2){
+        highlightCell(moveableCellID(dice1));   
+    }
+    //If dice2 not played, highlight the moveablecell
+    if(!isDice2Played){
+        highlightCell(moveableCellID(dice2));
+    }
+}
+
+const highlightCell = function(targetCellID){
+    //Target can't exceeded 0 and 24
+    if(targetCellID > 0 && targetCellID < 25){
+        targetCell = document.getElementById(targetCellID);
+
+        /*If there is less than 2 checker in a cell
+        or there is more than 1 checker and its filled with current players checkers
+        Highlight that target by changing attribute*/
+        if(board[targetCellID-1].length < 2 
+            || (board[targetCellID-1].length > 0 && board[targetCellID-1][0]==currentPlayer)){
+            targetCell.setAttribute("fill-opacity", "0.4");
+            targetCell.setAttribute("fill", "Green");
+        }
+    }   
 }
 
 btnRoll.addEventListener('click',function(e){
@@ -235,8 +263,8 @@ btnRoll.addEventListener('click',function(e){
         move = dice1 == dice2 ? 4 : 2;
 
         //Reset the dice played 
-        dice1Played = false;
-        dice2Played = false;
+        isDice1Played = false;
+        isDice2Played = false;
 
         //We rolled the dices. Now we can move
         gameStatus="Move";
@@ -252,6 +280,7 @@ btnRoll.addEventListener('click',function(e){
         //Repeats until user stops
         rollingAnimation = setInterval(function() {
 
+            //Randoms every time so it gives us animation by sending to diceEl.src
             dice1Anim = Math.floor(Math.random() * 6 + 1);
             dice2Anim = Math.floor(Math.random() * 6 + 1);                
             
@@ -298,7 +327,11 @@ hitbox.forEach((element) => {
                     //If there is no hitted checker of his own or trying to pull a hitted checker
                     if(currentPlayer != hittedCheckers[0] || element.id == "0"){
                         //Returns the clicked cell id. If its blacks turn, 0 should be 25
-                        firstClickedCellID =  element.id==0 && turn % 2 == 1 ? 25 : element.id;                   
+                        firstClickedCellID =  element.id==0 && turn % 2 == 1 ? 25 : element.id; 
+
+                        //After first click, highlight the possible moves
+                        updateUIHighlightedMoves();  
+                        message="";                
                     }
                     else{
                         message = "You must play hitted checker first!";
@@ -337,17 +370,15 @@ hitbox.forEach((element) => {
                     else{
                         /*If dices are same, player gonna move 4 times
                         so we shouldn"t take the dice out of the equation*/
-                        if(dice1 == dice2 && isAbleToMove(dice1)){
-                            moveChecker();   
-                        }
+                        
                         //If dice1 hasn't used yet
-                        else if(!dice1Played && isAbleToMove(dice1)){
-                            dice1Played = true;
+                        if(isAbleToMove(dice1,isDice1Played)){
+                            isDice1Played = true;
                             moveChecker();                    
                         }
                         //If dice2 hasn't used yet
-                        else if(!dice2Played && isAbleToMove(dice2)){
-                            dice2Played = true;
+                        else if(isAbleToMove(dice2,isDice2Played)){
+                            isDice2Played = true;
                             moveChecker();
                         }
                         //It means player try to put wrong cell.
@@ -362,6 +393,8 @@ hitbox.forEach((element) => {
                     resetClicks();
                     message = "Wrong move! You can't put your checker onto opponents defense!";
                 }
+                
+                hitbox.forEach((element) =>{element.setAttribute("fill-opacity", "0.0");});
             }            
         }
         //Dice hasn't rolled yet
