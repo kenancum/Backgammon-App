@@ -1,12 +1,16 @@
 'use strict';
+//For the rules of backgammon game please visit https://www.bkgm.com/rules.html
 
 const boardElement = document.getElementById("board");
 const dice1El = document.getElementById("dice1");
 const dice2El = document.getElementById("dice2");
 const btnRoll = document.getElementById("btn-roll");
+const btnPass = document.getElementById("btn-pass");
 const hitbox = document.querySelectorAll(".hitbox");
-var dice1,dice2;
+const outerCellEls = document.getElementById("outer-cells");
 
+var dice1,dice2;
+var value;
 var html;
 var board;
 var players =["White","Black"];
@@ -24,14 +28,21 @@ var hittedCheckers;
 var dice1Anim, dice2Anim;
 var rollingAnimation;
 var targetCell;
+var highlightColor;
+var checkersAtFinalArea = 0;
+var playersCheckersCount = 0;
+var finalArea;
+var isAbleToGoOut;
 
 //Updates UI, according to board
 const updateUI = function(board){    
+
     //need to reset the html code at the beginning of every update
     html = "";
 
     //for every cell in the board
     board.forEach(function (cell, cellNumber) {
+
         //determines area
         area = cellNumber <= 5 ? 1 : cellNumber <= 11 ? 2 : cellNumber <= 17 ? 3 : 4
         
@@ -74,6 +85,7 @@ const updateUI = function(board){
         
         //for every checker in a cell
         cell.forEach(function (checker, checkerNumber) {
+
             //if its at the bottom, calculation should be reverse. Area 1 and 2 is the bottom
             cyMultiplier = area <3 ? -1 : 1;
 
@@ -91,11 +103,11 @@ const updateUI = function(board){
                 cy -= cyMultiplier * 58.5;
 
             //we are getting html code with the parameters we calculate. checker presents the color of checkers
-            html += '<circle cx=' + cx +' cy="' + cy
-            + '" r="6.5" fill="' + checker + '" stroke="red" stroke-width="0.2"/>"';
+            html += checkerHTML(cx,cy,checker);
             
             cy += cyMultiplier * 13;
         });
+        
     });
 
     //The rest is for hitted checkers. They must seen at the middle of the board.
@@ -109,13 +121,28 @@ const updateUI = function(board){
         for(var i=0; i <= (checkerNumber-1)/2; i++){
             cy += 13*cyMultiplier;
         }
-
-        html += '<circle cx=' + cx +' cy="' + cy
-        + '" r="6.5" fill="' + checker + '" stroke="red" stroke-width="0.2"/>"';
+        html += checkerHTML(cx,cy,checker);
     });
 
     //Sends our html value to index.html
     boardElement.innerHTML=html;
+
+    html = '';
+    cx=10;
+    for(var i = 25; i<=26;i++){
+        cy = 10;
+        board[i].forEach(function (checker,checkerNumber){            
+            html += checkerHTML(cx,cy,checker);
+            cy+= 14.566666;
+        });
+        cx+= 21;
+    } 
+    outerCellEls.innerHTML = html;
+}
+
+const checkerHTML = function(x,y,checker){
+    return '<circle class="checker" cx=' + x +' cy="' + y
+    + '" fill="' + checker + '"/>"';
 }
 
 //Creates new game
@@ -123,23 +150,27 @@ const newGame = function(){
     //Create new board
     board = [];
 
-    //Array for broken checkers
+    //Array for hitted checkers
     hittedCheckers = [];
+    
+    isAbleToGoOut = false
 
-    //Change the text to give more clear direction
+    //Change the text to give more clear direction to players
     btnRoll.textContent = "Start!";
 
-    //Player should roll the dice to start the game
+    /*gameStatus limits the player for the action that they shouldn't do
+    //Player should roll the dice to start the game*/
     gameStatus = "Roll";
 
     //Decides which players turn. Even turns are for white, odd turns are for black player
     turn=0;
 
-    //initial clicks are not clicked
+    //Initial click hasn't clicked yet
     clickCounter = 0;
 
-    //Board should contain 24 Cells, cells has to be stack
-    for (let i = 0; i < 24; i++){
+    /*Board should contain 27 Cells, cells has to be stack
+    (24 for board 2 is for outer cells 1 is blank for calculations)*/
+    for (let i = 0; i < 27; i++){
         board.push([]);
     }
 
@@ -163,8 +194,6 @@ const newGame = function(){
             board[23].push(players[1]);
         }
     }
-
-    //Updates board
     updateUI(board);
 }
 
@@ -175,19 +204,22 @@ const resetClicks = function(){
 }
 
 const moveChecker = function(){
+    //In data, cell is equal to id-1. in html id starts from 1 but in array it starts from 0 
+    secondClickedCellID -= 1;
+
     //If its 0th cell (25th cell for black), its middle cell where hitted checkers stored
     if(firstClickedCellID == 0 || firstClickedCellID == 25){
         //Take the checker from first cell we clicked to second cell we clicked
-        board[secondClickedCellID-1].push(hittedCheckers.pop());
+        board[secondClickedCellID].push(hittedCheckers.pop());
     }
     else{
         //Take the checker from first cell we clicked to second cell we clicked
-        board[secondClickedCellID-1].push(board[firstClickedCellID-1].pop());
+        board[secondClickedCellID].push(board[firstClickedCellID-1].pop());
     }    
 
     //If there is only one opponent in the target cell, Hit!
     if((clickedCellPlayer!=currentPlayer && (clickedCellCheckerCount == 1))){
-        hittedCheckers.push(board[secondClickedCellID-1].shift());
+        hittedCheckers.push(board[secondClickedCellID].shift());
     }
     //We moved so we need to reduce remaining move
     move--;
@@ -198,8 +230,14 @@ const moveChecker = function(){
 }
 
 const isAbleToMove = function(dice, isDicePlayed){
-    //if dice isn't played or dices are equal, And target cell is equal to dice + first cell, it is ablee to move so returns true
-    return secondClickedCellID == moveableCellID(dice) && (!isDicePlayed || dice1 == dice2);
+     /*If player can't go out according to rules, movable cells cant exceed between 0 and 24*/
+    if(!isAbleToGoOut && (moveableCellID(dice) > 24 || moveableCellID(dice) < 0))
+        return false
+    else{
+        /*If dice isn't played, and target cell is equal to dice + first cell, it means player is able to move
+        Also if dices are same, player gonna move 4 times, so we shouldn"t take the dice out of the equation*/
+        return (secondClickedCellID == moveableCellID(dice) && (!isDicePlayed || dice1 == dice2));
+    } 
 };
 
 const moveableCellID= function(dice){
@@ -210,7 +248,13 @@ const moveableCellID= function(dice){
     10 +- 2 or 10 +- 5
     this +- is move multiplier
     */
-    return +firstClickedCellID + +dice * moveMultiplier;
+    value = +firstClickedCellID + +dice * moveMultiplier;
+
+    /*If white player should go to rectangle id 26 and black player id 27.
+    Black goes to minus so if it's id goes lower than zero, it should turn 27*/ 
+    value = value > 24 ? 26 : value < 1 ? 27 : value;
+
+    return value;
 }
 
 const updateUIHighlightedMoves = function(){
@@ -225,19 +269,71 @@ const updateUIHighlightedMoves = function(){
 }
 
 const highlightCell = function(targetCellID){
-    //Target can't exceeded 0 and 24
-    if(targetCellID > 0 && targetCellID < 25){
-        targetCell = document.getElementById(targetCellID);
+    targetCell = document.getElementById(targetCellID);
 
+    //If targetcell is in the board or player can get out
+    if(targetCellID > 0 && targetCellID < 25 || isAbleToGoOut){
         /*If there is less than 2 checker in a cell
         or there is more than 1 checker and its filled with current players checkers
-        Highlight that target by changing attribute*/
-        if(board[targetCellID-1].length < 2 
-            || (board[targetCellID-1].length > 0 && board[targetCellID-1][0]==currentPlayer)){
-            targetCell.setAttribute("fill-opacity", "0.4");
-            targetCell.setAttribute("fill", "Green");
+        Highlight that target by changing attribute to Green else Red*/
+        highlightColor = board[targetCellID-1].length < 2 
+                    || board[targetCellID-1][0] == currentPlayer ? "Green" : "Red";
+        
+        targetCell.setAttribute("fill-opacity", "0.4");
+        targetCell.setAttribute("fill",highlightColor);
+    }
+    
+}
+
+//Checks if every checker is in their players final area. It's a must to win the game
+const isAllCheckersAtFinalArea = function(){
+    //Determines the final area for players
+    finalArea = currentPlayer == players[0] ? 4 : 1;
+
+    //Resets the values of counters
+    checkersAtFinalArea = 0;
+    playersCheckersCount = 0;
+
+    //Every cell in the board
+    board.forEach(function(cell,cellNumber) {
+
+        //Also cell 26 is belongs to area 1 where outer checkers for black player stacked
+        area =  (cellNumber <= 5 || cellNumber == 26) ? 1 : cellNumber <= 11 ? 2 : cellNumber <= 17 ? 3 : 4
+
+        //Every checkers in a cell
+        cell.forEach(function(checker){
+            //To count how many checkers current player has on the board 
+            if(checker == currentPlayer){
+                //To count how many checkers current player has on the final area 
+                if(area == finalArea){
+                    checkersAtFinalArea++;
+                }
+                playersCheckersCount++;
+            }
+        });
+    });
+
+    //To count how many hitted checkers current player has
+    hittedCheckers.forEach(function(checker){
+        if(checker == currentPlayer){
+            playersCheckersCount++;
         }
-    }   
+    });
+    //If all checkers are at final area, which means counters are equal, return true;
+    return checkersAtFinalArea==playersCheckersCount;
+}
+
+const endTurn = function(){
+    message = currentPlayer + "'s turn Ended!"
+    turn++;
+    gameStatus = "Roll";
+  }
+
+const endGame = function(){
+    message = currentPlayer + " player has won!";
+    gameStatus = "Start";
+    btnRoll.textContent = "New Game";
+    btnPass.style.display = "none";    
 }
 
 btnRoll.addEventListener('click',function(e){
@@ -245,8 +341,8 @@ btnRoll.addEventListener('click',function(e){
     if(gameStatus == "Start"){
         newGame();
     }
-
     else if(gameStatus == "Rolling Animation"){
+        btnPass.style.display = "inline";
         //Stops animation
         clearInterval(rollingAnimation);
         btnRoll.textContent = "Roll!";
@@ -254,7 +350,7 @@ btnRoll.addEventListener('click',function(e){
         //Dice must be random and values are between 1 and 6
         dice1 = Math.floor(Math.random() * 6 + 1);
         dice2 = Math.floor(Math.random() * 6 + 1);
-            
+
         //Returns dice png according to dice number
         dice1El.src="img/dice/dice-"+dice1+".png";
         dice2El.src="img/dice/dice-"+dice2+".png";
@@ -289,24 +385,34 @@ btnRoll.addEventListener('click',function(e){
           }, 50);
     }
     else{
-        console.log("Finish the turn before rolling dices again!");
+        message="Finish the turn before rolling dices again!";
     }
   })
 
-//There is 25 hitbox elements. So I declared event listener function for each class named hitbox
+  //for passing the turn if there is no available moves
+btnPass.addEventListener('click', function(e){
+    if(gameStatus=="Move"){
+        resetClicks();
+        hitbox.forEach((element) => {element.setAttribute("fill-opacity", "0.0");});
+        endTurn();
+    }
+    else
+        message = "Can't pass the turn at rolling dice state";
+    console.log(message)
+     
+})
+
+//There is 27 hitbox elements. So I declared event listener function for each class named hitbox
 hitbox.forEach((element) => {
     element.addEventListener("click", function(){
-        /*I used game status to limit player to not do some things.
-        For example player shouldn't move the checkers before rolling dices
-        Or player shouldn't rolling dices more than once in a turn.
-        */
         if(gameStatus == "Move"){
             //First click is for pulling second click is for putting. To simplifier I used odd and even
             clickCounter++;
             clickCounter %= 2;
 
             //Player is decided by turn. even turns are for white, odd represents black player
-            currentPlayer = players[turn % 2];
+            turn %= 2;
+            currentPlayer = players[turn];
 
             /*When you click, I want to keep clicked cells occupied by who. 0th id is for hitted checkers
             Elements array is from 0 to 23 but id's are begins from 1 until 24
@@ -318,16 +424,19 @@ hitbox.forEach((element) => {
             clickedCellCheckerCount = element.id=="0" ? hittedCheckers.length : board[element.id-1].length;
             
             //If its black players turn, move should be reversed
-            moveMultiplier = turn % 2 == 0 ? 1: -1;
+            moveMultiplier = turn == 0 ? 1: -1;
+            
+            //Check if checkers can go out. They can only go out when all checkers of the player are at the final area
+            isAbleToGoOut = isAllCheckersAtFinalArea();
             
             //If a checker hasn't pulled yet
-            if(clickCounter==1){                
-                //If player clicked the cell filled with players checker
+            if(clickCounter==1){         
+                //If player clicked the cell filled with players checker       
                 if(currentPlayer == clickedCellPlayer){
                     //If there is no hitted checker of his own or trying to pull a hitted checker
                     if(currentPlayer != hittedCheckers[0] || element.id == "0"){
                         //Returns the clicked cell id. If its blacks turn, 0 should be 25
-                        firstClickedCellID =  element.id==0 && turn % 2 == 1 ? 25 : element.id; 
+                        firstClickedCellID =  element.id == 0 && turn % 2 == 1 ? 25 : element.id; 
 
                         //After first click, highlight the possible moves
                         updateUIHighlightedMoves();  
@@ -342,7 +451,6 @@ hitbox.forEach((element) => {
                 }
                 //Other error messages
                 else{
-                    //If there is no checker in a cell
                     if(!clickedCellPlayer){
                         message = "Empty Cell";
                     }
@@ -350,7 +458,6 @@ hitbox.forEach((element) => {
                     else{
                         message =  "Wrong player! Its " + currentPlayer + "'s turn!";
                     }
-
                     resetClicks();
                 }
             }
@@ -368,15 +475,11 @@ hitbox.forEach((element) => {
                         message = "Same cell selected";
                     }
                     else{
-                        /*If dices are same, player gonna move 4 times
-                        so we shouldn"t take the dice out of the equation*/
-                        
-                        //If dice1 hasn't used yet
+                        //Check if player is able to move to the clicked cell
                         if(isAbleToMove(dice1,isDice1Played)){
                             isDice1Played = true;
                             moveChecker();                    
                         }
-                        //If dice2 hasn't used yet
                         else if(isAbleToMove(dice2,isDice2Played)){
                             isDice2Played = true;
                             moveChecker();
@@ -388,13 +491,15 @@ hitbox.forEach((element) => {
                         }                                                                      
                     }
                 }
-                //This means, player try to put over oppents cell
+                //This means, player try to put over oppents defense
                 else{
                     resetClicks();
                     message = "Wrong move! You can't put your checker onto opponents defense!";
                 }
-                
-                hitbox.forEach((element) =>{element.setAttribute("fill-opacity", "0.0");});
+                //Resets highlight's after second click
+                hitbox.forEach((element) =>{
+                    element.setAttribute("fill-opacity", "0.0");
+                });
             }            
         }
         //Dice hasn't rolled yet
@@ -404,11 +509,14 @@ hitbox.forEach((element) => {
 
         //If there is no move left, that means turn has ended
         if(move==0){
-            message += "\n" + currentPlayer + "'s turn Ended!"
-            turn++;
-            gameStatus = "Roll";
-        }    
-          
+            endTurn();
+        }
+
+        //If player collect all checkers at it's oven outer cell, finish the game.
+        if(board[25].length == 15 || board[26].length == 15){
+            endGame();
+        }        
+        
         console.log(message);                
     });
   });

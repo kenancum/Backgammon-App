@@ -24,8 +24,9 @@
   .container{
     width: 600px;
     height: 670px;
-    position: absolute;
-    display: inline-block;
+    top: -1350px;
+    left: 800px;
+    position: relative;
     transition: transform 150ms ease-in-out;
   }
   .content{
@@ -36,11 +37,11 @@
     left: 50%;
     transform: translate(-50%, -50%);
   }
-  .btn-roll {
+  .btn-roll, .btn-pass{
     border:1px solid black;
-    position: absolute;
-    top: 53%;
-    left: 35%;
+    position: relative;
+    top: 10%;
+    left: 15%;
     background-color: #00a516;
     color: white;
     padding: 16px 32px;
@@ -69,4 +70,25 @@
     stroke:navy;
     stroke-opacity: 0.05;
     fill-opacity: 0.2;
+  }
+  [id="26"], [id="27"]{
+    width: 18px;
+    height:221px;
+    stroke: rgb(34, 34, 34);
+  }
+  .outer-cells{
+    top:0;
+    left:0;
+    position:absolute;
+  }
+  .outer-checkers{
+    position: relative;
+  }
+  .checker{
+    stroke:red;
+    stroke-width:0.2;
+    r: 7.28333;
+  }
+  #board .checker{
+    r: 6.5;
   }
