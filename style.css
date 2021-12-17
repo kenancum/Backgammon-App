@@ -92,3 +92,13 @@
   #board .checker{
     r: 6.5;
   }
+
+  h1{
+    text-align: center;
+  }
+  h2{
+    color:rgb(112, 0, 177);
+    position:absolute;
+    bottom: 100px;
+    left: 120px;
+  }

@@ -8,6 +8,8 @@ const btnRoll = document.getElementById("btn-roll");
 const btnPass = document.getElementById("btn-pass");
 const hitbox = document.querySelectorAll(".hitbox");
 const outerCellEls = document.getElementById("outer-cells");
+const playerTurnText = document.getElementById("player-turn-text");
+const notificationText = document.getElementById("notification-text");
 
 var dice1,dice2;
 var value;
@@ -36,7 +38,6 @@ var isAbleToGoOut;
 
 //Updates UI, according to board
 const updateUI = function(board){    
-
     //need to reset the html code at the beginning of every update
     html = "";
 
@@ -107,7 +108,6 @@ const updateUI = function(board){
             
             cy += cyMultiplier * 13;
         });
-        
     });
 
     //The rest is for hitted checkers. They must seen at the middle of the board.
@@ -174,6 +174,7 @@ const newGame = function(){
         board.push([]);
     }
 
+    currentPlayer = players[0]
     //Initial positions of checkers
     for(let i = 0; i<5;i++)
     {
@@ -194,6 +195,7 @@ const newGame = function(){
             board[23].push(players[1]);
         }
     }
+    sendPlayerTurnText();
     updateUI(board);
 }
 
@@ -226,7 +228,6 @@ const moveChecker = function(){
 
     //Changes UI after move
     updateUI(board);
-    message = "Checker is putted on";
 }
 
 const isAbleToMove = function(dice, isDicePlayed){
@@ -326,6 +327,8 @@ const isAllCheckersAtFinalArea = function(){
 const endTurn = function(){
     message = currentPlayer + "'s turn Ended!"
     turn++;
+    currentPlayer=players[turn%2];
+    sendPlayerTurnText();
     gameStatus = "Roll";
   }
 
@@ -369,6 +372,7 @@ btnRoll.addEventListener('click',function(e){
     //Animation
     else if(gameStatus=="Roll")
     {                
+        currentPlayer = players[turn];
         btnRoll.textContent = "Throw!";
         
         gameStatus = "Rolling Animation";
@@ -388,7 +392,15 @@ btnRoll.addEventListener('click',function(e){
         message="Finish the turn before rolling dices again!";
     }
   })
+//sends html to current players turn message with current players color  
+const sendPlayerTurnText = function(){
+    playerTurnText.textContent = currentPlayer +" players turn!";
+    playerTurnText.style.color = currentPlayer; 
+}
 
+const SendNotificationTessage = function(){
+    notificationText.textContent = message;
+}
   //for passing the turn if there is no available moves
 btnPass.addEventListener('click', function(e){
     if(gameStatus=="Move"){
@@ -398,7 +410,7 @@ btnPass.addEventListener('click', function(e){
     }
     else
         message = "Can't pass the turn at rolling dice state";
-    console.log(message)
+        SendNotificationTessage();
      
 })
 
@@ -516,7 +528,7 @@ hitbox.forEach((element) => {
         if(board[25].length == 15 || board[26].length == 15){
             endGame();
         }        
-        
-        console.log(message);                
+
+        SendNotificationTessage();           
     });
   });
