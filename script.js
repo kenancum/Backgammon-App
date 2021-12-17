@@ -398,7 +398,7 @@ const sendPlayerTurnText = function(){
     playerTurnText.style.color = currentPlayer; 
 }
 
-const SendNotificationTessage = function(){
+const SendNotificationMessage = function(){
     notificationText.textContent = message;
 }
   //for passing the turn if there is no available moves
@@ -410,7 +410,7 @@ btnPass.addEventListener('click', function(e){
     }
     else
         message = "Can't pass the turn at rolling dice state";
-        SendNotificationTessage();
+        SendNotificationMessage();
      
 })
 
@@ -528,7 +528,6 @@ hitbox.forEach((element) => {
         if(board[25].length == 15 || board[26].length == 15){
             endGame();
         }        
-
-        SendNotificationTessage();           
+        SendNotificationMessage();           
     });
   });
