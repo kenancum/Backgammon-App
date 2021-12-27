@@ -19,6 +19,7 @@ var players =["White","Black"];
 var cx, cy, cyMultiplier, area;
 var gameStatus = "Start";
 var doubleDice = false;
+var clickedCell;
 var currentPlayer, clickedCellPlayer;
 var firstClickedCellID, secondClickedCellID;
 var message;
@@ -432,8 +433,9 @@ hitbox.forEach((element) => {
             board[] means a cell in the board  
             board[][] means a checker in spesific cell
             */
-            clickedCellPlayer = element.id=="0" ? hittedCheckers[0] : board[element.id-1][0];
-            clickedCellCheckerCount = element.id=="0" ? hittedCheckers.length : board[element.id-1].length;
+            clickedCell = element.id=="0" ? hittedCheckers : board[element.id-1];
+            clickedCellPlayer = clickedCell[0];
+            clickedCellCheckerCount = clickedCell.length;
             
             //If its black players turn, move should be reversed
             moveMultiplier = turn == 0 ? 1: -1;
@@ -475,7 +477,7 @@ hitbox.forEach((element) => {
             }
             //If its second click, putting action must provide
             else{
-                /*If player tries to target the cell where there is his cell
+                /*If player tries to target the cell where there is players
                 or opponents cell with a single checker*/
                 if(currentPlayer == clickedCellPlayer || clickedCellCheckerCount <= 1){  
 
@@ -524,7 +526,7 @@ hitbox.forEach((element) => {
             endTurn();
         }
 
-        //If player collect all checkers at it's oven outer cell, finish the game.
+        //If player collect all checkers at it's own outer cell, finish the game.
         if(board[25].length == 15 || board[26].length == 15){
             endGame();
         }        
